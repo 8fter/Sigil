@@ -209,8 +209,32 @@ class SigilTracker:
         if observations:
             print(f"\n👁 Observations: {len(observations)}")
 
+        # Glyph usage
+        glyphs = self._load_log("glyphs.jsonl")
+        if glyphs:
+            print(f"\n🔮 Glyphs Used: {len(glyphs)}")
+
+            from collections import Counter
+            glyph_counts = Counter(g.get('glyph', '?') for g in glyphs)
+
+            # Display each glyph with count
+            for glyph, count in glyph_counts.most_common():
+                print(f"   {glyph} × {count}")
+
+            # Show most recent context for each unique glyph
+            print(f"\n   Recent usage:")
+            seen_glyphs = set()
+            for g in reversed(glyphs):
+                glyph = g.get('glyph', '?')
+                if glyph not in seen_glyphs:
+                    context = g.get('context', 'no context')[:60]
+                    print(f"   {glyph} - {context}...")
+                    seen_glyphs.add(glyph)
+                    if len(seen_glyphs) >= 6:  # Limit to 6 unique glyphs
+                        break
+
         # Activity over time
-        all_entries = decisions + preferences + patterns + questions + observations
+        all_entries = decisions + preferences + patterns + questions + observations + glyphs
         if all_entries:
             timestamps = [datetime.fromisoformat(e['timestamp']) for e in all_entries if 'timestamp' in e]
             if timestamps:
