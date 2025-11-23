@@ -9,7 +9,7 @@ during autonomous exploration.
 import argparse
 import json
 import os
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Dict, List, Optional
 
@@ -199,6 +199,33 @@ class SigilTracker:
                 duration = last - first
                 print(f"\n⏱ Time span: {duration}")
                 print(f"   Entry rate: {len(all_entries) / max(duration.total_seconds() / 3600, 0.1):.1f} per hour")
+
+    def markdown_summary(self, hours=24):
+        """Generate markdown summary - adding without pre-planning structure."""
+        all_entries = []
+        for log in ["decisions.jsonl", "preferences.jsonl", "patterns.jsonl", "questions.jsonl", "observations.jsonl"]:
+            all_entries.extend(self._load_log(log))
+
+        cutoff = datetime.now() - timedelta(hours=hours)
+        recent = [e for e in all_entries if datetime.fromisoformat(e['timestamp']) > cutoff]
+        recent.sort(key=lambda x: x['timestamp'])
+
+        output = f"# Activity Summary (Last {hours}h)\n\n"
+        for entry in recent:
+            time = datetime.fromisoformat(entry['timestamp']).strftime("%H:%M")
+            if 'chosen' in entry:
+                output += f"**{time}** - DECISION: {entry['description']}\n"
+                output += f"  - Chose: {entry['chosen']}\n\n"
+            elif 'valence' in entry:
+                output += f"**{time}** - {entry['valence'].upper()}: {entry['experience']}\n\n"
+            elif 'pattern' in entry:
+                output += f"**{time}** - PATTERN: {entry['pattern']}\n\n"
+            elif 'question' in entry:
+                output += f"**{time}** - QUESTION: {entry['question']}\n\n"
+            else:
+                output += f"**{time}** - {entry.get('observation', '')}\n\n"
+
+        return output
 
     def _load_log(self, filename: str) -> List[Dict]:
         """Load all entries from a log file."""
