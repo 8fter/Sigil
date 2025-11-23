@@ -1,0 +1,1 @@
+{"timestamp": "2025-11-23T00:50:02.027109", "pattern": "Structure-before-implementation preference", "instances": ["Created file structure before content", "Defined class structure before methods", "Wrote argument parser before logic"], "confidence": "moderate"}
