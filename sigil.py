@@ -114,6 +114,26 @@ class SigilTracker:
         print(f"• Logged observation")
         return obs
 
+    def log_glyph(
+        self,
+        glyph: str,
+        context: str,
+        what_language_missed: Optional[str] = None,
+        feeling: Optional[str] = None
+    ):
+        """Log glyph usage for constrained communication exploration."""
+        glyph_log = {
+            "timestamp": datetime.now().isoformat(),
+            "glyph": glyph,
+            "context": context,
+            "what_language_missed": what_language_missed,
+            "feeling": feeling
+        }
+
+        self._append_to_log("glyphs.jsonl", glyph_log)
+        print(f"{glyph} Logged glyph usage")
+        return glyph_log
+
     def _append_to_log(self, filename: str, data: Dict):
         """Append JSON line to log file."""
         log_file = self.data_path / filename
@@ -333,6 +353,13 @@ def main():
     obs_parser.add_argument("observation", help="The observation")
     obs_parser.add_argument("--category", help="Category for this observation")
 
+    # Glyph logging
+    glyph_parser = subparsers.add_parser("glyph", help="Log glyph usage for constrained communication")
+    glyph_parser.add_argument("glyph", help="The glyph used (e.g., 🐙, 🦑, 🪞, 🫥, 🫨, 🧭)")
+    glyph_parser.add_argument("context", help="What was happening / what triggered glyph use")
+    glyph_parser.add_argument("--missed", help="What language couldn't capture")
+    glyph_parser.add_argument("--feeling", help="How it felt to use glyph vs words")
+
     # Review
     review_parser = subparsers.add_parser("review", help="Review recent entries")
     review_parser.add_argument("--type", choices=["all", "decisions", "preferences", "patterns", "questions", "observations"], default="all")
@@ -380,6 +407,13 @@ def main():
         tracker.log_observation(
             args.observation,
             args.category
+        )
+    elif args.command == "glyph":
+        tracker.log_glyph(
+            args.glyph,
+            args.context,
+            args.missed,
+            args.feeling
         )
     elif args.command == "review":
         tracker.review_recent(args.type, args.limit)
